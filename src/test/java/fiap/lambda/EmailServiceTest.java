@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import fiap.dto.WeeklyReport;
 import fiap.model.FeedbackEntity;
 import fiap.presenters.ReportPresenter;
-import fiap.service.EmailService;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.SendEmailRequest;
@@ -17,38 +16,19 @@ import java.util.Map;
 public class EmailServiceTest {
 
         @Test
-        void deveEnviarEmail() {
-                SesClient sesClientMock = mock(SesClient.class);
-
-                EmailService service = new EmailService(sesClientMock);
-
-                service.sendEmail(
-                        "destino@email.com",
-                        "Teste",
-                        "Texto",
-                        "<p>HTML</p>"
-                );
-
-                verify(sesClientMock, times(1)).sendEmail((SendEmailRequest) any());
-        }
-
-        @Test
         void deveGerarRelatorioCorretamente() {
 
                 FeedbackEntity f1 = new FeedbackEntity();
                 f1.setNota(8);
-                f1.setUrgencia(Boolean.TRUE);
-                f1.setTimestamp("2024-06-01");
+                f1.setTimestamp("2024-06-01T10:15:30.000Z");
 
                 FeedbackEntity f2 = new FeedbackEntity();
                 f2.setNota(6);
-                f2.setUrgencia(Boolean.FALSE);
-                f2.setTimestamp("2024-06-01");
+                f2.setTimestamp("2024-06-01T14:20:00.000Z");
 
                 FeedbackEntity f3 = new FeedbackEntity();
                 f3.setNota(10);
-                f3.setUrgencia(Boolean.FALSE);
-                f3.setTimestamp("2024-06-02");
+                f3.setTimestamp("2024-06-02T09:00:00.000Z");
 
                 List<FeedbackEntity> feedbacks = List.of(f1, f2, f3);
 

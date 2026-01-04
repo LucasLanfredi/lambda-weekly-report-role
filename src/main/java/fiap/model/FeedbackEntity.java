@@ -1,6 +1,7 @@
 package fiap.model;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
 @DynamoDbBean
@@ -9,7 +10,6 @@ public class FeedbackEntity {
     private String id;
     private String descricao;
     private Integer nota;
-    private Boolean urgencia;
     private String timestamp;
 
     @DynamoDbPartitionKey
@@ -43,7 +43,9 @@ public class FeedbackEntity {
 
     public void setTimestamp(String timestamp) {this.timestamp = timestamp;}
 
-    public Boolean getUrgencia() {return urgencia;}
+    @DynamoDbIgnore
+    public Boolean getUrgencia() {
+        return nota != null && nota < 3;
+    }
 
-    public void setUrgencia(Boolean urgencia) {this.urgencia = urgencia;}
 }

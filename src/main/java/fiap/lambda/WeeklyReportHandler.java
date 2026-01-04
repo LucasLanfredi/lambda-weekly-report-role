@@ -2,35 +2,36 @@ package fiap.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.lambda.runtime.events.CloudWatchLogsEvent;
+import com.amazonaws.services.lambda.runtime.events.ScheduledEvent;
 import fiap.dto.WeeklyReport;
 import fiap.model.FeedbackEntity;
 import fiap.presenters.ReportPresenter;
 import fiap.repository.WeeklyReportRepository;
-import fiap.service.EmailService;
+
+import fiap.service.ReportStorageService;
 
 import java.util.List;
 
-public class WeeklyReportHandler implements RequestHandler<Object, Void> {
+public class WeeklyReportHandler implements RequestHandler<ScheduledEvent, Void> {
 
     private final WeeklyReportRepository repository;
-    private final EmailService emailService;
+    private final ReportStorageService storageService;
 
     public WeeklyReportHandler() {
         this.repository = new WeeklyReportRepository();
-        this.emailService = new EmailService();
+        this.storageService = new ReportStorageService();
     }
 
     @Override
-    public Void handleRequest(Object input, Context context) {
+    public Void handleRequest(ScheduledEvent input, Context context) {
 
         List<FeedbackEntity> feedbacks =
                 repository.buscarFeedbacksUltimaSemana();
 
         WeeklyReport report = ReportPresenter.gerarRelatorio(feedbacks);
 
-        emailService.sendEmail(
-                System.getenv("RECIPIENT_EMAIL"),
-                "Relatório Semanal de Feedbacks",
+        storageService.storeReport(
                 ReportPresenter.toText(report),
                 ReportPresenter.toHtml(report)
         );

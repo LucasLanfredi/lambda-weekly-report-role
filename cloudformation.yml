@@ -28,9 +28,9 @@ Resources:
 
               - Effect: Allow
                 Action:
-                  - ses:SendEmail
-                  - ses:SendRawEmail
-                Resource: "*"
+                  - s3:PutObject
+                Resource: arn:aws:s3:::relatorio-semanal-feedback/reports/*
+
 
   WeeklyReportLambda:
     Type: AWS::Lambda::Function
@@ -44,14 +44,6 @@ Resources:
       Code:
         S3Bucket: your-bucket
         S3Key: weekly-report-lambda.zip
-
-  WeeklySchedule:
-    Type: AWS::Events::Rule
-    Properties:
-      ScheduleExpression: cron(0 9 ? * MON *) # Segunda-feira 09h
-      Targets:
-        - Arn: !GetAtt WeeklyReportLambda.Arn
-          Id: WeeklyReportTarget
 
   PermissionForEventsToInvokeLambda:
     Type: AWS::Lambda::Permission

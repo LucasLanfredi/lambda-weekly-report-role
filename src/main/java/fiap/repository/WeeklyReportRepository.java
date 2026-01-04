@@ -16,6 +16,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import util.DateUtils;
 
 @ApplicationScoped
 public class WeeklyReportRepository {
@@ -38,12 +39,6 @@ public class WeeklyReportRepository {
                 TableSchema.fromBean(FeedbackEntity.class));
     }
 
-    public WeeklyReportRepository(DynamoDbEnhancedClient enhancedClient) {
-        this.table = enhancedClient.table(
-                TABLE_NAME,
-                TableSchema.fromBean(FeedbackEntity.class));
-    }
-
     /**
      * Busca feedbacks enviados nos últimos 7 dias
      */
@@ -55,10 +50,12 @@ public class WeeklyReportRepository {
             List<FeedbackEntity> resultados = new ArrayList<>();
 
             table.scan().items().forEach(feedback -> {
-                LocalDate dataEnvio = LocalDate.parse(feedback.getTimestamp());
+                if (feedback.getTimestamp() != null) {
+                    LocalDate dataEnvio = DateUtils.toLocalDate(feedback.getTimestamp());
 
-                if (!dataEnvio.isBefore(inicioPeriodo)) {
-                    resultados.add(feedback);
+                    if (!dataEnvio.isBefore(inicioPeriodo)) {
+                        resultados.add(feedback);
+                    }
                 }
             });
 

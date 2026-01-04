@@ -2,8 +2,8 @@ package fiap.presenters;
 
 import fiap.dto.WeeklyReport;
 import fiap.model.FeedbackEntity;
+import util.DateUtils;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +37,7 @@ public class ReportPresenter {
                 feedbacks.stream()
                         .filter(f -> f.getTimestamp() != null)
                         .collect(Collectors.groupingBy(
-                                f -> LocalDate.parse(f.getTimestamp()).toString(),
+                                f -> DateUtils.toLocalDate(f.getTimestamp()).toString(),
                                 Collectors.counting()
                         ))
         );
@@ -45,7 +45,6 @@ public class ReportPresenter {
         // Quantidade de avaliações por urgência
         report.setQuantidadePorUrgencia(
                 feedbacks.stream()
-                        .filter(f -> f.getUrgencia() != null)
                         .collect(Collectors.groupingBy(
                                 FeedbackEntity::getUrgencia,
                                 Collectors.counting()
