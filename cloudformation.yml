@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda de geração de relatório semanal de feedbacks
+
+Resources:
+
+  WeeklyReportLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda-weekly-report-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ReportPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Scan
+                Resource: "*"
+
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: "*"
+
+  WeeklyReportLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-weekly-feedback-report
+      Runtime: java21
+      Handler: io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest
+      MemorySize: 512
+      Timeout: 60
+      Role: !GetAtt WeeklyReportLambdaRole.Arn
+      Code:
+        S3Bucket: your-bucket
+        S3Key: weekly-report-lambda.zip
+
+  WeeklySchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: cron(0 9 ? * MON *) # Segunda-feira 09h
+      Targets:
+        - Arn: !GetAtt WeeklyReportLambda.Arn
+          Id: WeeklyReportTarget
+
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WeeklyReportLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt WeeklySchedule.Arn
