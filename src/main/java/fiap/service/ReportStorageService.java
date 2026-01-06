@@ -5,6 +5,7 @@ import org.jboss.logging.Logger;
 import io.quarkus.logging.Log;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -50,6 +51,7 @@ public class ReportStorageService {
                 .bucket(BUCKET)
                 .key(key)
                 .contentType(contentType)
+                .acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
 
         s3Client.putObject(

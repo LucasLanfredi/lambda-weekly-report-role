@@ -12,6 +12,7 @@ import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -49,17 +50,24 @@ public class WeeklyReportRepository {
 
             List<FeedbackEntity> resultados = new ArrayList<>();
 
-            table.scan().items().forEach(feedback -> {
-                if (feedback.getTimestamp() != null) {
-                    LocalDate dataEnvio = DateUtils.toLocalDate(feedback.getTimestamp());
+            DynamoDbIndex<FeedbackEntity> index = table.index("createdAt");
 
-                    if (!dataEnvio.isBefore(inicioPeriodo)) {
-                        resultados.add(feedback);
+            index.scan().forEach(page -> {
+                page.items().forEach(feedback -> {
+                    if (feedback.getTimestamp() != null) {
+                        LocalDate dataEnvio = DateUtils.toLocalDate(feedback.getTimestamp());
+                        if (!dataEnvio.isBefore(inicioPeriodo)) {
+                            resultados.add(feedback);
+                        }
                     }
-                }
+                });
             });
 
-            LOG.infof("Total de feedbacks encontrados na última semana: %d", resultados.size());
+            LOG.infof(
+                    "Total de feedbacks encontrados na última semana: %d",
+                    resultados.size()
+            );
+
             return resultados;
 
         } catch (DynamoDbException e) {
