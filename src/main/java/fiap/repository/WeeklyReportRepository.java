@@ -1,22 +1,20 @@
 package fiap.repository;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
 import fiap.model.FeedbackEntity;
 import org.jboss.logging.Logger;
 
-
-import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import util.DateUtils;
 
 @ApplicationScoped
@@ -44,36 +42,44 @@ public class WeeklyReportRepository {
      * Busca feedbacks enviados nos últimos 7 dias
      */
     public List<FeedbackEntity> buscarFeedbacksUltimaSemana() {
-        try {
-            LocalDate hoje = LocalDate.now();
-            LocalDate inicioPeriodo = hoje.minusDays(7);
+        LocalDate hoje = LocalDate.now(ZoneOffset.UTC);
+        LocalDate inicioPeriodo = hoje.minusDays(6); // 7 dias no total
 
-            List<FeedbackEntity> resultados = new ArrayList<>();
+        List<FeedbackEntity> resultados = new ArrayList<>();
 
-            DynamoDbIndex<FeedbackEntity> index = table.index("createdAt");
+        // usar exatamente o nome do índice conforme console: "createdAt"
+        DynamoDbIndex<FeedbackEntity> index = table.index("createdAt");
 
-            index.scan().forEach(page -> {
-                page.items().forEach(feedback -> {
-                    if (feedback.getTimestamp() != null) {
-                        LocalDate dataEnvio = DateUtils.toLocalDate(feedback.getTimestamp());
-                        if (!dataEnvio.isBefore(inicioPeriodo)) {
-                            resultados.add(feedback);
-                        }
-                    }
-                });
-            });
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = inicioPeriodo.plusDays(i);
+            String dateStr = date.toString(); // yyyy-MM-dd conforme GSI partition key
 
-            LOG.infof(
-                    "Total de feedbacks encontrados na última semana: %d",
-                    resultados.size()
-            );
+            long inicioDia = date.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
+            long fimDia = date.plusDays(1)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .minusSeconds(1)
+                    .toEpochSecond();
 
-            return resultados;
+            SdkIterable<Page<FeedbackEntity>> pages = index.query(q -> q.queryConditional(
+                    QueryConditional.sortBetween(
+                            Key.builder()
+                                    .partitionValue(dateStr)
+                                    .sortValue(inicioDia)
+                                    .build(),
+                            Key.builder()
+                                    .partitionValue(dateStr)
+                                    .sortValue(fimDia)
+                                    .build()
+                    )
+            ));
 
-        } catch (DynamoDbException e) {
-            Log.error("Erro ao consultar feedbacks no DynamoDB", e);
-            throw e;
+            for (Page<FeedbackEntity> page : pages) {
+                resultados.addAll(page.items());
+            }
         }
+
+        LOG.infof("Total de feedbacks encontrados na última semana: %d", resultados.size());
+        return resultados;
     }
 }
 

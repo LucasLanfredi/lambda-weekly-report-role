@@ -35,9 +35,9 @@ public class ReportPresenter {
         // Quantidade de avaliações por dia
         report.setQuantidadePorDia(
                 feedbacks.stream()
-                        .filter(f -> f.getTimestamp() != null)
+                        .filter(f -> f.getDate() != null)
                         .collect(Collectors.groupingBy(
-                                f -> DateUtils.toLocalDate(f.getTimestamp()).toString(),
+                                FeedbackEntity::getDate,
                                 Collectors.counting()
                         ))
         );

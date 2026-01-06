@@ -17,21 +17,24 @@ public class EmailServiceTest {
 
                 FeedbackEntity f1 = new FeedbackEntity();
                 f1.setNota(2); // URGENTE
-                f1.setTimestamp("2024-06-01T10:15:30.000Z");
+                f1.setDate("2024-06-01");
+                f1.setCreatedAt(1717242000L); // 2024-06-01T14:20:00Z
 
                 FeedbackEntity f2 = new FeedbackEntity();
                 f2.setNota(6); // NÃO urgente
-                f2.setTimestamp("2024-06-01T14:20:00.000Z");
+                f2.setDate("2024-06-01");
+                f2.setCreatedAt(1717242000L); // mesmo dia
 
                 FeedbackEntity f3 = new FeedbackEntity();
                 f3.setNota(10); // NÃO urgente
-                f3.setTimestamp("2024-06-02T09:00:00.000Z");
+                f3.setDate("2024-06-02");
+                f3.setCreatedAt(1717318800L); // 2024-06-02T09:00:00Z
 
                 List<FeedbackEntity> feedbacks = List.of(f1, f2, f3);
 
                 WeeklyReport report = ReportPresenter.gerarRelatorio(feedbacks);
 
-                // Média: (8 + 6 + 10) / 3 = 8.0
+                // Média: (2 + 6 + 10) / 3 = 6.0
                 assertEquals(6.0, report.getMediaAvaliacoes());
 
                 assertEquals(
