@@ -35,8 +35,7 @@ jobs:
       - name: Deploy to Lambda
         run: |
           FUNCTION_NAME="${{ secrets.LAMBDA_FUNCTION_NAME }}"
-          RECIPIENT_EMAIL="${{ secrets.RECIPIENT_EMAIL }}"
-          SOURCE_EMAIL="${{ secrets.SOURCE_EMAIL }}"
+          SNS_TOPIC_ARN="${{ secrets.SNS_TOPIC_ARN }}"
           ZIP_FILE="target/function.zip"
           
           echo "Deploying $ZIP_FILE to function $FUNCTION_NAME"
@@ -44,13 +43,6 @@ jobs:
           aws lambda update-function-code \
             --function-name "$FUNCTION_NAME" \
             --zip-file fileb://"$ZIP_FILE" \
-            --region us-east-2
-
-          aws lambda wait function-updated --function-name "$FUNCTION_NAME" --region us-east-2
-
-          aws lambda update-function-configuration \
-            --function-name "$FUNCTION_NAME" \
-            --environment "Variables={RECIPIENT_EMAIL=$RECIPIENT_EMAIL,SOURCE_EMAIL=$SOURCE_EMAIL}" \
             --region us-east-2
 
       - name: Wait for update to complete
